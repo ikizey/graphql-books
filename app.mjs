@@ -1,13 +1,13 @@
 import express from 'express';
-import { graphqlHTTP } from 'express-graphql';
+import { createHandler } from 'graphql-http/lib/use/express';
 import schema from './schema/schema.mjs';
 
 const app = express();
 const port = 4321;
 
-app.use(
+app.all(
   '/api',
-  graphqlHTTP({
+  createHandler({
     schema,
   })
 );
