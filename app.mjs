@@ -4,14 +4,15 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import bodyParser from 'body-parser';
-import schema from './schema/schema.mjs';
+import { typeDefs, resolvers } from './schema/schema.mjs';
 
 const app = express();
 const httpServer = http.createServer(app);
 const port = 4321;
 
 const server = new ApolloServer({
-  schema,
+  typeDefs,
+  resolvers,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 await server.start();

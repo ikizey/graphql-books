@@ -1,71 +1,102 @@
-import {
-  GraphQLObjectType,
-  GraphQLSchema,
-  GraphQLString,
-  GraphQLID,
-  GraphQLInt,
-} from 'graphql';
-import _ from 'lodash';
-// dummy data
 const books = [
-  { name: '111', genre: 'aaa', id: '1' },
-  { name: '222', genre: 'bbb', id: '2' },
-  { name: '333', genre: 'ccc', id: '3' },
-  { name: '444', genre: 'ddd', id: '2' },
-  { name: '555', genre: 'eee', id: '2' },
-  { name: '666', genre: 'fff', id: '3' },
+  {
+    id: '1',
+    name: 'The Adventures of Tom Sawyer',
+    shortDescription: 'A classic tale of adventure and mischief',
+    authorIds: ['1'],
+  },
+  {
+    id: '2',
+    name: 'The Adventures of Huckleberry Finn',
+    shortDescription: 'A classic tale of friendship and adventure',
+    authorIds: ['1'],
+  },
+  {
+    id: '3',
+    name: "Harry Potter and the Philosopher's Stone",
+    shortDescription: 'A magical tale of adventure and friendship',
+    authorIds: ['2'],
+  },
+  {
+    id: '4',
+    name: 'Harry Potter and the Chamber of Secrets',
+    shortDescription: 'A magical tale of mystery and adventure',
+    authorIds: ['2'],
+  },
+  {
+    id: '5',
+    name: 'Harry Potter and the Prisoner of Azkaban',
+    shortDescription: 'The third book in the Harry Potter series.',
+    authorIds: ['2'],
+  },
+  {
+    id: '6',
+    name: 'The Prince and the Pauper',
+    shortDescription: 'A tale of mistaken identity.',
+    authorIds: ['1'],
+  },
 ];
 
 const authors = [
-  { name: 'auth1', age: 44, id: '1', authorId: '1' },
-  { name: 'auth2', age: 55, id: '2', authorId: '2' },
-  { name: 'auth3', age: 66, id: '3', authorId: '3' },
+  {
+    id: '1',
+    name: 'Mark Twain',
+    bookIds: ['1', '2', ''],
+  },
+  {
+    id: '2',
+    name: 'J.K. Rowling',
+    bookIds: ['3', '4'],
+  },
 ];
 
-const BookType = new GraphQLObjectType({
-  name: 'Book',
-  fields: () => ({
-    id: { type: GraphQLID },
-    name: { type: GraphQLString },
-    genre: { type: GraphQLString },
-    author: {
-      type: AuthorType,
-      resolve(parent, args) {
-        return _.find(authors, { id: parent.authorId });
-      },
-    },
-  }),
-});
+export const typeDefs = `#graphql
+  type Book {
+    id: ID!
+    name: String!
+    shortDescription: String
+    authors: [Author!]!
+  }
 
-const AuthorType = new GraphQLObjectType({
-  name: 'Author',
-  fields: () => ({
-    id: { type: GraphQLID },
-    name: { type: GraphQLString },
-    age: { type: GraphQLInt },
-  }),
-});
+  type Author {
+    id: ID!
+    name: String!
+    books: [Book!]!
+  }
 
-const RootQuery = new GraphQLObjectType({
-  name: 'RootQueryType',
-  fields: {
-    book: {
-      type: BookType,
-      args: { id: { type: GraphQLID } },
-      resolve(parent, args) {
-        return _.find(books, { id: args.id });
-      },
+  type Query {
+    books: [Book]
+    book(id: ID): Book
+    authors: [Author]
+    author(id: ID): Author
+  }
+`;
+
+export const resolvers = {
+  Query: {
+    books() {
+      return books;
     },
-    author: {
-      type: AuthorType,
-      args: { id: { type: GraphQLID } },
-      resolve(parent, args) {
-        return _.fill(authors, { id: args.id });
-      },
+    book(root, { id }) {
+      return books.find((book) => book.id === id);
+    },
+    authors() {
+      return authors;
+    },
+    author(root, { id }) {
+      return authors.find((author) => author.id === id);
     },
   },
-});
-
-const schema = new GraphQLSchema({ query: RootQuery });
-
-export default schema;
+  Book: {
+    authors: (book) => {
+      const authorIds = book.authorIds;
+      return authors.filter((author) => authorIds.includes(author.id));
+    },
+  },
+  Author: {
+    books: (author) => {
+      const authorBookIds = author.bookIds;
+      return books.filter((book) => authorBookIds.includes(book.id));
+    },
+  },
+};
