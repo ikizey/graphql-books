@@ -6,6 +6,7 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import { typeDefs } from './schema/typeDefs.mjs';
 import { resolvers } from './schema/resolvers.mjs';
 
@@ -24,7 +25,7 @@ const server = new ApolloServer({
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 await server.start();
-app.use(bodyParser.json(), expressMiddleware(server));
+app.use(cors(), bodyParser.json(), expressMiddleware(server));
 
 mongoose.connect(`mongodb+srv://${mongoUser}:${mongoPassword}@${mongoURL}`);
 mongoose.connection.once('open', () => {
