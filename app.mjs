@@ -4,7 +4,14 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import bodyParser from 'body-parser';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 import { typeDefs, resolvers } from './schema/schema.mjs';
+
+dotenv.config({ path: `.env.local` });
+const mongoUser = process.env.MONGO_USER || '';
+const mongoPassword = process.env.MONGO_PASSWORD || '';
+const mongoURL = process.env.MONGO_URL || '';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -17,6 +24,11 @@ const server = new ApolloServer({
 });
 await server.start();
 app.use(bodyParser.json(), expressMiddleware(server));
+
+mongoose.connect(`mongodb+srv://${mongoUser}:${mongoPassword}@${mongoURL}`);
+mongoose.connection.once('open', () => {
+  console.log('connected to mongoDB instance');
+});
 
 app.listen(port, () => {
   console.info(`listening at ${port}`);
