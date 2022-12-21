@@ -6,7 +6,8 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { typeDefs, resolvers } from './schema/schema.mjs';
+import { typeDefs } from './schema/typeDefs.mjs';
+import { resolvers } from './schema/resolvers.mjs';
 
 dotenv.config({ path: `.env.local` });
 const mongoUser = process.env.MONGO_USER || '';
