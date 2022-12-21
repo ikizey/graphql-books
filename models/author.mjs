@@ -1,11 +1,11 @@
-import { Schema } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 const authorSchema = new Schema({
   name: {
     type: String,
     required: true,
   },
-  books: [
+  booksIds: [
     {
       type: String,
       required: true,
@@ -13,6 +13,6 @@ const authorSchema = new Schema({
   ],
 });
 
-const Author = mongoose.model('Author', authorSchema);
+const Author = model('Author', authorSchema);
 
 export default Author;
