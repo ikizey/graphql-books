@@ -20,12 +20,15 @@ export const resolvers = {
       getDocumentById(Author, id, additionalArgument),
   },
   Mutation: {
-    createBook: (root, data) => createDocument(Book, data),
+    createBook: (root, data) =>
+      createDocument(Book, data, 'authorIds', Author, 'booksIds'),
     updateBook: (root, args) => updateDocument(Book, args.id, args),
-    deleteBook: (root, { id }) => deleteDocument(Book, id, 'authorIds', Author),
+    deleteBook: (root, { id }) =>
+      deleteDocument(Book, id, 'authorIds', Author, 'booksIds'),
     createAuthor: (root, data) => createDocument(Author, data),
     updateAuthor: (root, args) => updateDocument(Author, args.id, args),
-    deleteAuthor: (root, { id }) => deleteDocument(Author, id, 'bookIds', Book),
+    deleteAuthor: (root, { id }) =>
+      deleteDocument(Author, id, 'booksIds', Book, 'authorIds'),
   },
   Book: {
     authors: async ({ authorIds }) => {
@@ -33,8 +36,8 @@ export const resolvers = {
     },
   },
   Author: {
-    books: async ({ bookIds }) => {
-      return getRelatedDocuments(Book, '_id', bookIds);
+    books: async ({ booksIds }) => {
+      return getRelatedDocuments(Book, '_id', booksIds);
     },
   },
 };

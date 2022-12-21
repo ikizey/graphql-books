@@ -1,10 +1,47 @@
-export const createDocument = async (Model, data) => {
+export const createDocument = async (
+  Model,
+  data,
+  fieldToUpdate,
+  relatedModel,
+  relatedField
+) => {
   try {
     const newDocument = new Model(data);
-    return await newDocument.save();
+    const createdDocument = await newDocument.save();
+    if (relatedModel && fieldToUpdate && relatedField) {
+      await updateRelatedDocumentsOnCreation(
+        createdDocument,
+        fieldToUpdate,
+        relatedModel,
+        relatedField,
+        Model
+      );
+    }
+    return createdDocument;
   } catch (error) {
     throw new Error(`Error creating ${Model.modelName}`);
   }
+};
+
+const updateRelatedDocumentsOnCreation = async (
+  createdDocument,
+  fieldToUpdate,
+  relatedModel,
+  relatedField,
+  Model
+) => {
+  createdDocument[fieldToUpdate].forEach(async (relatedId) => {
+    const relatedDocument = await relatedModel.findById(relatedId);
+    if (relatedDocument) {
+      try {
+        relatedDocument[relatedField].push(createdDocument._id);
+        await relatedDocument.save();
+      } catch (error) {
+        await Model.deleteOne({ _id: createdDocument._id });
+        throw new Error(error);
+      }
+    }
+  });
 };
 
 export const paginate = async (Model, { pageSize, page }) => {
@@ -21,11 +58,7 @@ export const getDocumentById = async (Model, id) => {
 
 export const updateDocument = async (Model, id, updatedFields) => {
   try {
-    const updatedDocument = await Model.updateOne({ id }, updatedFields);
-    if (updatedDocument.nModified === 0) {
-      throw new Error(`Document with id ${id} not found`);
-    }
-    return updatedDocument;
+    return await Model.findOneAndUpdate({ id }, updatedFields);
   } catch (error) {
     throw new Error(error);
   }
@@ -35,17 +68,19 @@ export const deleteDocument = async (
   Model,
   id,
   fieldToUpdate,
-  relatedModel
+  relatedModel,
+  relatedField
 ) => {
   try {
     const deletedDocument = await Model.findByIdAndDelete(id);
     if (!deletedDocument) {
       throw new Error(`${Model.modelName} with id ${id} not found`);
     }
-    await updateRelatedDocuments(
+    await updateRelatedDocumentsOnDeletion(
       deletedDocument,
       fieldToUpdate,
       relatedModel,
+      relatedField,
       Model
     );
     return true;
@@ -54,19 +89,20 @@ export const deleteDocument = async (
   }
 };
 
-const updateRelatedDocuments = async (
+const updateRelatedDocumentsOnDeletion = async (
   deletedDocument,
   fieldToUpdate,
   relatedModel,
+  relatedField,
   Model
 ) => {
   deletedDocument[fieldToUpdate].forEach(async (relatedId) => {
-    const relatedDocument = await relatedModel.findById(relatedId);
-    const documentIndex = relatedDocument[fieldToUpdate].indexOf(
-      deletedDocument._id
-    );
-    relatedDocument[fieldToUpdate].splice(documentIndex, 1);
     try {
+      const relatedDocument = await relatedModel.findById(relatedId);
+      const index = relatedDocument[relatedField].indexOf(deletedDocument._id);
+      if (index !== -1) {
+        relatedDocument[relatedField].splice(index, 1);
+      }
       await relatedDocument.save();
     } catch (error) {
       await Model.create(deletedDocument);
