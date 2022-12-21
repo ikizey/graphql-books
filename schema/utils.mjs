@@ -1,10 +1,8 @@
 export const createDocument = async (Model, data) => {
   try {
     const newDocument = new Model(data);
-    const savedDocument = await newDocument.save();
-    return savedDocument;
+    return await newDocument.save();
   } catch (error) {
-    console.error(error);
     throw new Error(`Error creating ${Model.modelName}`);
   }
 };
