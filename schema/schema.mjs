@@ -41,12 +41,12 @@ const authors = [
   {
     id: '1',
     name: 'Mark Twain',
-    bookIds: ['1', '2', ''],
+    bookIds: ['1', '2', '6'],
   },
   {
     id: '2',
     name: 'J.K. Rowling',
-    bookIds: ['3', '4'],
+    bookIds: ['3', '4', '5'],
   },
 ];
 
@@ -65,38 +65,119 @@ export const typeDefs = `#graphql
   }
 
   type Query {
-    books: [Book]
-    book(id: ID): Book
-    authors: [Author]
-    author(id: ID): Author
+    books(pageSize: Int, page: Int): [Book]
+    book(id: ID!): Book
+    authors(pageSize: Int, page: Int): [Author]
+    author(id: ID!): Author
   }
+
+  type Mutation {
+    createBook(name: String!, shortDescription: String, authorIds: [ID!]): Book
+    updateBook(id: ID!, name: String, shortDescription: String, authorIds: [ID!]): Book
+    deleteBook(id: ID!): Boolean
+    createAuthor(name: String!, bookIds: [ID!]): Author
+    updateAuthor(id: ID!, name: String, bookIds: [ID!]): Author
+    deleteAuthor(id: ID!): Boolean
+}
 `;
 
 export const resolvers = {
   Query: {
-    books() {
+    books: (root, { pageSize, page }) => {
+      if (pageSize && page) {
+        const startIndex = (page - 1) * pageSize;
+        return books.slice(startIndex, startIndex + pageSize);
+      }
       return books;
     },
     book(root, { id }) {
       return books.find((book) => book.id === id);
     },
-    authors() {
+    authors: (root, { pageSize, page }) => {
+      if (pageSize && page) {
+        const startIndex = (page - 1) * pageSize;
+        return authors.slice(startIndex, startIndex + pageSize);
+      }
       return authors;
     },
     author(root, { id }) {
       return authors.find((author) => author.id === id);
     },
   },
+  Mutation: {
+    createBook: (root, args) => {
+      const newBook = {
+        id: String(Math.max(-1, ...books.map((book) => book.id)) + 1),
+        name: args.name,
+        shortDescription: args.shortDescription,
+        authorIds: args.authorIds,
+      };
+      books.push(newBook);
+      return newBook;
+    },
+    updateBook: (root, args) => {
+      const bookIndex = books.findIndex((book) => book.id === args.id);
+      if (bookIndex === -1) {
+        return {
+          id: '-1',
+          name: 'not found',
+          authorIds: [],
+        };
+      }
+      const updatedBook = {
+        ...books[bookIndex],
+        ...args,
+      };
+      books[bookIndex] = updatedBook;
+      return updatedBook;
+    },
+    deleteBook: (root, { id }) => {
+      const bookIndex = books.findIndex((book) => book.id === id);
+      if (bookIndex === -1) {
+        return false;
+      }
+      books.splice(bookIndex, 1);
+      return true;
+    },
+    createAuthor: (root, args) => {
+      const newAuthor = {
+        id: String(Math.max(-1, ...authors.map((book) => book.id)) + 1),
+        name: args.name,
+        bookIds: args.bookIds,
+      };
+      authors.push(newAuthor);
+      return newAuthor;
+    },
+    updateAuthor: (root, { id, name, bookIds }) => {
+      const index = authors.findIndex((author) => author.id === id);
+      if (index === -1) {
+        return {
+          id: '-1',
+          name: 'not found',
+          books: [],
+        };
+      }
+      const updatedAuthor = { ...authors[index], name, bookIds };
+      authors[index] = updatedAuthor;
+      return updatedAuthor;
+    },
+    deleteAuthor: (root, { id }) => {
+      const index = authors.findIndex((author) => author.id === id);
+      if (index === -1) {
+        return false;
+      }
+      authors.splice(index, 1);
+      return true;
+    },
+  },
   Book: {
-    authors: (book) => {
-      const authorIds = book.authorIds;
+    authors: ({ authorIds }) => {
       return authors.filter((author) => authorIds.includes(author.id));
     },
   },
   Author: {
-    books: (author) => {
-      const authorBookIds = author.bookIds;
-      return books.filter((book) => authorBookIds.includes(book.id));
+    books: ({ bookIds }) => {
+      return books.filter((book) => bookIds.includes(book.id));
     },
   },
 };
