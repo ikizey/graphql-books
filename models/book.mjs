@@ -9,7 +9,7 @@ const bookSchema = new Schema({
     type: String,
     required: true,
   },
-  authors: [
+  authorIds: [
     {
       type: String,
       required: true,
