@@ -13,11 +13,9 @@ import {
 export const resolvers = {
   Query: {
     books: (root, args) => paginate(Book, args),
-    book: (root, { id, additionalArgument }) =>
-      getDocumentById(Book, id, additionalArgument),
+    book: (root, { id }) => getDocumentById(Book, id),
     authors: (root, args) => paginate(Author, args),
-    author: (root, { id, additionalArgument }) =>
-      getDocumentById(Author, id, additionalArgument),
+    author: (root, { id }) => getDocumentById(Author, id),
   },
   Mutation: {
     createBook: (root, data) =>
