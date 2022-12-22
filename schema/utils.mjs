@@ -53,7 +53,7 @@ export const paginate = async (Model, { pageSize, page }) => {
 };
 
 export const getDocumentById = async (Model, id) => {
-  return await Model.findById({ id });
+  return await Model.findById(id);
 };
 
 export const updateDocument = async (Model, id, updatedFields) => {
